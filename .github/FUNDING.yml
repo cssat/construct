@@ -1,0 +1,11 @@
+# These are supported funding model platforms
+
+github: [cssat]
+custom: [
+  'https://www.cssat.org/', 
+  'https://socialwork.uw.edu/', 
+  'https://www.ballmergroup.org', 
+  'https://stuartfoundation.org', 
+  'https://giddensfoundation.org',
+  'https://www.dcyf.wa.gov'
+]
