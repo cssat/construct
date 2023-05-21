@@ -10,8 +10,15 @@ jobs:
   slash-command-dispatch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@98814c53be79b1d30f795b907e553d8679345975 # v6.4.0
+      # Get the branch name
+      - name: Get the target branch name
         id: vars
+        run: |
+          branch=${{ github.event.client_payload.slash_command.args.named.branch }}
+          if [[ -z "$branch" ]]; then branch="main"; fi
+          echo "branch=$branch" >> $GITHUB_OUTPUT      
+      - uses: actions/github-script@98814c53be79b1d30f795b907e553d8679345975 # v6.4.0
+        id: comment-metadata
         with:
           script: |
             result = await github.rest.pulls.get({
@@ -19,17 +26,18 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.payload.issue.number
             })
-            
-            core.setOutput("branch_name", result.data.head.ref); 
-            core.setOutput("pull_request_number", context.payload.issue.number);
+            echo "::set-output name=pull_request_number::${context.payload.issue.number}"
+            echo "branch_name=${result.data.head.ref}" >> $GITHUB_OUTPUT
+            echo "pull_request_number=${context.payload.issue.number}" >> $GITHUB_OUTPUT
+
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@a28ee6cd74d5200f99e247ebc7b365c03ae0ef3c # v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.LINT_PR_GH_TOKEN }}
           issue-type: pull-request
           static-args: |
-            branch_name=${{ steps.vars.outputs.branch_name }}
-            pull_request_number=${{ steps.vars.outputs.pull_request_number }}
+            branch_name=${{ steps.comment-metadata.outputs.branch_name }}
+            pull_request_number=${{ steps.comment-metadata.outputs.pull_request_number }}
           commands: |
             help
             finish
